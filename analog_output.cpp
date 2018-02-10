@@ -29,6 +29,8 @@ std::ofstream myfile;
 int32  channelStart = 0;
 int32  channelCount = 1;
 
+InstantAoCtrl * instantAoCtrl;
+
 /* Error handling
  * --------------
  *
@@ -97,6 +99,10 @@ static void mdlInitializeSizes(SimStruct *S)
 
     ssSetOptions(S, 0);
     myfile.open ("analog_output.txt");
+    instantAoCtrl = AdxInstantAoCtrlCreate();
+
+    DeviceInformation devInfo(deviceDescription);
+    instantAoCtrl->setSelectedDevice(devInfo);
 
     
 }   
@@ -162,14 +168,9 @@ static void mdlOutputs(SimStruct *S, int_T tid)
 {
     const real_T *u = (const real_T *) ssGetInputPortSignal(S,0);
     int_T width = ssGetInputPortWidth(S,0);
-
-    InstantAoCtrl * instantAoCtrl = AdxInstantAoCtrlCreate();
-    DeviceInformation devInfo(deviceDescription);
-    instantAoCtrl->setSelectedDevice(devInfo);    
         
     instantAoCtrl->Write(channelStart, *u);
 
- 	instantAoCtrl->Dispose();       
 }
 
 
@@ -214,7 +215,7 @@ static void mdlTerminate(SimStruct *S)
 {
     
     myfile.close();
-
+ 	instantAoCtrl->Dispose();
     
 }
 
