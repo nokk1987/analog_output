@@ -21,13 +21,14 @@
 #include "simstruc.h"
 #include <iostream>
 #include <fstream>
+#include <vector>
 #include "bdaqctrl.h"
 using namespace Automation::BDaq;
 
 std::ofstream myfile;
 
 int32  channelStart = 0;
-int32  channelCount = 1;
+int32  channelCount = 2;
 
 InstantAoCtrl * instantAoCtrl;
 
@@ -74,15 +75,24 @@ static void mdlInitializeSizes(SimStruct *S)
     ssSetNumContStates(S, 0);
     ssSetNumDiscStates(S, 0);
 
-    if (!ssSetNumInputPorts(S, 1)) return;
+    if (!ssSetNumInputPorts(S, 4)) return;
     ssSetInputPortWidth(S, 0, DYNAMICALLY_SIZED);
+    ssSetInputPortWidth(S, 1, DYNAMICALLY_SIZED);
+    ssSetInputPortWidth(S, 2, DYNAMICALLY_SIZED);
+    ssSetInputPortWidth(S, 3, DYNAMICALLY_SIZED);
     ssSetInputPortRequiredContiguous(S, 0, true); /*direct input signal access*/
+    ssSetInputPortRequiredContiguous(S, 1, true); /*direct input signal access*/
+    ssSetInputPortRequiredContiguous(S, 2, true); /*direct input signal access*/
+    ssSetInputPortRequiredContiguous(S, 3, true); /*direct input signal access*/
     /*
      * Set direct feedthrough flag (1=yes, 0=no).
      * A port has direct feedthrough if the input is used in either
      * the mdlOutputs or mdlGetTimeOfNextVarHit functions.
      */
     ssSetInputPortDirectFeedThrough(S, 0, 1);
+    ssSetInputPortDirectFeedThrough(S, 1, 1);
+    ssSetInputPortDirectFeedThrough(S, 2, 1);
+    ssSetInputPortDirectFeedThrough(S, 3, 1);
 
     if (!ssSetNumOutputPorts(S, 0)) return;
     //ssSetOutputPortWidth(S, 0, DYNAMICALLY_SIZED);
@@ -166,10 +176,13 @@ static void mdlInitializeSampleTimes(SimStruct *S)
  */
 static void mdlOutputs(SimStruct *S, int_T tid)
 {
-    const real_T *u = (const real_T *) ssGetInputPortSignal(S,0);
+    std::vector<real_T> inputBuff;
+    inputBuff.push_back( *((const real_T *) ssGetInputPortSignal(S,0)) );
+    inputBuff.push_back( *((const real_T *) ssGetInputPortSignal(S,1)) );
+//    const real_T *u = (const real_T *) ssGetInputPortSignal(S,0);
     int_T width = ssGetInputPortWidth(S,0);
-        
-    instantAoCtrl->Write(channelStart, *u);
+
+    instantAoCtrl->Write(channelStart, channelCount, &inputBuff[0]);
 
 }
 
@@ -213,10 +226,10 @@ static void mdlOutputs(SimStruct *S, int_T tid)
  */
 static void mdlTerminate(SimStruct *S)
 {
-    
+
     myfile.close();
  	instantAoCtrl->Dispose();
-    
+
 }
 
 
