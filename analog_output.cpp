@@ -25,10 +25,8 @@
 #include "bdaqctrl.h"
 using namespace Automation::BDaq;
 
-std::ofstream myfile;
-
 int32  channelStart = 0;
-int32  channelCount = 2;
+int32  channelCount = 4;
 
 InstantAoCtrl * instantAoCtrl;
 
@@ -95,26 +93,17 @@ static void mdlInitializeSizes(SimStruct *S)
     ssSetInputPortDirectFeedThrough(S, 3, 1);
 
     if (!ssSetNumOutputPorts(S, 0)) return;
-    //ssSetOutputPortWidth(S, 0, DYNAMICALLY_SIZED);
 
     ssSetNumSampleTimes(S, 1);
-    //ssSetNumRWork(S, 0);
-    //ssSetNumIWork(S, 0);
-    //ssSetNumPWork(S, 0);
-    //ssSetNumModes(S, 0);
-    //ssSetNumNonsampledZCs(S, 0);
 
     /* Specify the sim state compliance to be same as a built-in block */
     ssSetSimStateCompliance(S, USE_DEFAULT_SIM_STATE);
 
     ssSetOptions(S, 0);
-    myfile.open ("analog_output.txt");
     instantAoCtrl = AdxInstantAoCtrlCreate();
 
     DeviceInformation devInfo(deviceDescription);
     instantAoCtrl->setSelectedDevice(devInfo);
-
-    
 }   
 
 
@@ -177,13 +166,11 @@ static void mdlInitializeSampleTimes(SimStruct *S)
 static void mdlOutputs(SimStruct *S, int_T tid)
 {
     std::vector<real_T> inputBuff;
-    inputBuff.push_back( *((const real_T *) ssGetInputPortSignal(S,0)) );
-    inputBuff.push_back( *((const real_T *) ssGetInputPortSignal(S,1)) );
-//    const real_T *u = (const real_T *) ssGetInputPortSignal(S,0);
-    int_T width = ssGetInputPortWidth(S,0);
 
+    for(int i = 0; i < channelCount; i++) {
+        inputBuff.push_back( *((const real_T *) ssGetInputPortSignal(S,i)) );
+    }
     instantAoCtrl->Write(channelStart, channelCount, &inputBuff[0]);
-
 }
 
 
@@ -226,10 +213,7 @@ static void mdlOutputs(SimStruct *S, int_T tid)
  */
 static void mdlTerminate(SimStruct *S)
 {
-
-    myfile.close();
  	instantAoCtrl->Dispose();
-
 }
 
 
