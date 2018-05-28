@@ -99,7 +99,7 @@ static void mdlInitializeSizes(SimStruct *S)
     /* Specify the sim state compliance to be same as a built-in block */
     ssSetSimStateCompliance(S, USE_DEFAULT_SIM_STATE);
 
-    ssSetOptions(S, 0);
+    ssSetOptions(S, (SS_OPTION_EXCEPTION_FREE_CODE | SS_OPTION_DISALLOW_CONSTANT_SAMPLE_TIME));
     instantAoCtrl = AdxInstantAoCtrlCreate();
 
     DeviceInformation devInfo(deviceDescription);
@@ -116,9 +116,12 @@ static void mdlInitializeSizes(SimStruct *S)
  */
 static void mdlInitializeSampleTimes(SimStruct *S)
 {
-    ssSetSampleTime(S, 0, CONTINUOUS_SAMPLE_TIME);
+    ssSetSampleTime(S, 0, INHERITED_SAMPLE_TIME);
     ssSetOffsetTime(S, 0, 0.0);
-
+    ssSetModelReferenceSampleTimeDefaultInheritance(S);
+    if (ssGetSampleTime(S, 0) == CONTINUOUS_SAMPLE_TIME) {
+        ssSetErrorStatus(S, "This block cannot be assigned a continuous sample time");
+    }
 }
 
 
